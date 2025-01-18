@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pylint
+pyflakes
+bandit
+pydantic
+python-multipart
+flask

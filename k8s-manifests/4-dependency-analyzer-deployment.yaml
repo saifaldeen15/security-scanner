@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dependency-analyzer
+  namespace: security-scanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dependency-analyzer
+  template:
+    metadata:
+      labels:
+        app: dependency-analyzer
+    spec:
+      containers:
+      - name: dependency-analyzer
+        # Replace with your Docker Hub image
+        image: saaf20/dependency-analyzer:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5003
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dependency-analyzer-service
+  namespace: security-scanner
+spec:
+  selector:
+    app: dependency-analyzer
+  ports:
+    - port: 5004
+      targetPort: 5004
+      protocol: TCP
+      name: http

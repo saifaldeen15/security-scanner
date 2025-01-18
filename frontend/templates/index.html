@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Scanner Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/code_scanner.css') }}">
+</head>
+
+<body class="dark-mode">
+    <div class="container">
+        <div class="header-actions">
+            <h2>Code Analysis</h2>
+            <button onclick="toggleDarkMode()" class="theme-toggle">
+                <span class="theme-icon">🌙</span>
+                <span class="theme-text">Toggle Theme</span>
+            </button>
+        </div>
+
+        <section class="code-analysis">
+            <div class="code-input">
+                <textarea id="codeInput" placeholder="Paste your code here for security analysis..." maxlength="10000"
+                    onkeyup="updateCharCount(this)"></textarea>
+                <div class="char-counter">
+                    <span id="charCount">0</span>/<span id="charLimit">10000</span> characters
+                </div>
+            </div>
+            <button id="analyzeBtn" onclick="analyzeCode()">Analyze Code</button>
+            <div id="progressBar" class="progress-bar hidden">
+                <div class="progress"></div>
+            </div>
+        </section>
+
+        <section class="analysis-results">
+            <h2>Analysis Results</h2>
+            <div class="results-grid">
+                <!-- Overall Security Score -->
+                <div class="analysis-box overall-security">
+                    <h3>Overall Security Score</h3>
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <circle cx="18" cy="18" r="16" class="circle-bg" />
+                        <circle cx="18" cy="18" r="16" class="circle" id="overallSecurityCircle" />
+
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" class="percentage"
+                            id="overallSecurityScore">0%</text>
+                    </svg>
+                    <div class="score-details">
+                        <div class="detail-row">
+                            <span>Risk Level:</span>
+                            <span id="riskLevel">Low</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Total Issues:</span>
+                            <span id="totalIssues">0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Critical Issues:</span>
+                            <span id="criticalIssues">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Static Analysis -->
+                <div class="analysis-box static-analysis">
+                    <h3>Static Analysis</h3>
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <circle cx="18" cy="18" r="16" class="circle-bg" />
+                        <circle cx="18" cy="18" r="16" class="circle" id="staticAnalysisCircle" />
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" class="percentage"
+                            id="staticAnalysisScore">0%</text>
+                    </svg>
+                    <div class="issues-count">Issues: <span id="staticIssues">0</span></div>
+                    <button class="view-details" onclick="navigateToAnalysis('static-analysis')">View Details</button>
+                </div>
+
+                <!-- Dependency Analysis -->
+                <div class="analysis-box dependency-analysis">
+                    <h3>Dependency Analysis</h3>
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <circle cx="18" cy="18" r="16" class="circle-bg" />
+                        <circle cx="18" cy="18" r="16" class="circle" id="dependencyAnalysisCircle" />
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" class="percentage"
+                            id="dependencyAnalysisScore">0%</text>
+                    </svg>
+                    <div class="issues-count">Issues: <span id="dependencyIssues">0</span></div>
+                    <button class="view-details" onclick="navigateToAnalysis('dependency-analysis')">View
+                        Details</button>
+                </div>
+
+                <!-- AI Analysis -->
+                <div class="analysis-box ai-analysis">
+                    <h3>AI Analysis</h3>
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <circle cx="18" cy="18" r="16" class="circle-bg" />
+                        <circle cx="18" cy="18" r="16" class="circle" id="aiAnalysisCircle" />
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" class="percentage"
+                            id="aiAnalysisScore">0%</text>
+                    </svg>
+                    <div class="issues-count">Issues: <span id="aiIssues">0</span></div>
+                    <button class="view-details" onclick="navigateToAnalysis('ai-analysis')">View Details</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='code_scanner.js') }}"></script>
+    <script>
+        function toggleDarkMode() {
+            const body = document.body;
+            const icon = document.querySelector('.theme-icon');
+            body.classList.toggle('dark-mode');
+            icon.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const prefersDark = localStorage.getItem('darkMode') === 'true';
+            const icon = document.querySelector('.theme-icon');
+
+            if (prefersDark) {
+                document.body.classList.add('dark-mode');
+                icon.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                icon.textContent = '🌙';
+            }
+
+            clearAllData();
+        });
+
+        function navigateToAnalysis(type) {
+            window.location.href = `/${type}`;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: security-scanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        # Replace with your Docker Hub image
+        image: saaf20/frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5000
+        env:
+          - name: CODE_ANALYZER_URL
+            value: "http://static-analyzer-service.security-scanner.svc.cluster.local:5003"
+          - name: DEPENDENCY_SCANNER_URL
+            value: "http://dependency-analyzer-service.security-scanner.svc.cluster.local:5004"
+          - name: AI_ANALYZER_URL
+            value: "http://ai-analyzer-service.security-scanner.svc.cluster.local:5001"
+          - name: MONGODB_URL
+            value: "mongodb://mongodb-service:27017"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: security-scanner
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 5000
+  type: NodePort
+

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ analysis_type }} Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/analysis_details.css') }}">
+</head>
+
+<body class="dark-mode">
+    <div class="container">
+        <div class="header-actions">
+            <a href="/" class="back-button" onclick="return navigateBack(event)">← Back to Dashboard</a>
+            <button onclick="toggleDarkMode()" class="theme-toggle">Toggle Theme</button>
+        </div>
+        <h1>{{ analysis_type }} Results</h1>
+
+        <!-- Analysis Summary -->
+        <div class="analysis-summary" id="analysis-summary">
+            <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Issue Details -->
+        <div class="issues-container" id="issues-container">
+            <!-- Will be populated dynamically -->
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch recent scan data
+        async function fetchRecentScan() {
+            try {
+                const response = await fetch('/recent-scan');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data[0]; // Assuming the most recent scan is first
+            } catch (error) {
+                console.error('Error fetching recent scan:', error);
+                showError('Failed to load recent scan data');
+                return null;
+            }
+        }
+
+        // Function to update the UI with scan results
+        function updateAnalysisSummary(results) {
+            const summaryDiv = document.querySelector('#analysis-summary');
+            const analysisType = document.title.split(' ')[0]; // Get analysis type from page title
+
+            let summaryHTML = '<div class="summary-box"><h3>Analysis Summary</h3><div class="summary-details">';
+
+            if (analysisType === 'Static') {
+                // Static Analysis Summary
+                const staticData = results.static_analysis?.static_analyzer?.summary || {};
+                summaryHTML += `
+                    <p>Total Issues: <span>${staticData.total_issues || 0}</span></p>
+                    <p>Code Quality Issues: <span>${staticData.code_quality_issues || 0}</span></p>
+                    <p>Security Issues: <span>${staticData.security_issues || 0}</span></p>
+                    <p>Syntax Issues: <span>${staticData.syntax_issues || 0}</span></p>
+                `;
+            } else if (analysisType === 'Dependency') {
+                // Dependency Analysis Summary
+                const depData = results.dependency_analysis || {};
+                summaryHTML += `
+                    <p>Total Packages Scanned: <span>${depData.total_packages_scanned || 0}</span></p>
+                    <p>Vulnerabilities Found: <span>${depData.total_vulnerabilities_found || 0}</span></p>
+                    <p>Scan Date: <span>${depData.scan_timestamp || 'N/A'}</span></p>
+                `;
+            } else if (analysisType === 'AI') {
+                // AI Analysis Summary
+                const aiData = results.ai_analysis?.data || {};
+                summaryHTML += `
+                    <p>Risk Score: <span>${aiData.risk_score || 0}</span></p>
+                    <p>Critical Issues: <span>${aiData.critical_issues_count || 0}</span></p>
+                `;
+            }
+
+            summaryHTML += '</div></div>';
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        // Function to update issues container
+        function updateIssuesContainer(results) {
+            const issuesDiv = document.querySelector('#issues-container');
+            const analysisType = document.title.split(' ')[0];
+            let issuesHTML = '';
+
+            if (analysisType === 'Static' && results.static_analysis?.static_analyzer?.issues) {
+                const issues = results.static_analysis.static_analyzer.issues;
+                Object.entries(issues).forEach(([category, categoryIssues]) => {
+                    issuesHTML += `
+                        <div class="issues-section">
+                            <h3>${category.charAt(0).toUpperCase() + category.slice(1)} Issues</h3>
+                            ${categoryIssues.map(issue => {
+                        let severity = issue.severity.toLowerCase();
+                        if (severity === 'moderate') {
+                            severity = 'medium';
+                        }
+                        return `
+                                    <div class="issue-card severity-${severity}">
+                                        <div class="issue-header">
+                                            <span class="severity-badge severity-${severity}">${severity.toUpperCase()}</span>
+                                            <span class="issue-type">${issue.type}</span>
+                                        </div>
+                                        <div class="issue-details">
+                                            <p><strong>Message:</strong> ${issue.message}</p>
+                                            <p><strong>Line:</strong> ${issue.line}</p>
+                                            ${issue.symbol ? `<p><strong>Symbol:</strong> ${issue.symbol}</p>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                    }).join('')}
+                        </div>
+                    `;
+                });
+            } else if (analysisType === 'Dependency' && results.dependency_analysis?.vulnerable_packages) {
+                results.dependency_analysis.vulnerable_packages.forEach(packageData => {
+                    issuesHTML += `
+                        <div class="issues-section">
+                            <div class="package-header">
+                                <h3>Package: ${packageData.package}</h3>
+                                <span class="vulnerability-count">Total Vulnerabilities: ${packageData.total_vulnerabilities}</span>
+                            </div>
+                            <div class="vulnerabilities-grid">
+                                ${packageData.vulnerabilities.map(vuln => {
+                        let severity = vuln.severity.toLowerCase();
+                        if (severity === 'moderate') {
+                            severity = 'medium';
+                        }
+                        return `
+                                        <div class="issue-card severity-${severity}">
+                                            <div class="issue-header">
+                                                <div class="header-main">
+                                                    <span class="severity-badge severity-${severity}">${severity.toUpperCase()}</span>
+                                                    <span class="issue-id">${vuln.id}</span>
+                                                </div>
+                                                <div class="issue-summary">
+                                                    ${vuln.summary !== 'No summary available' ? `<p class="summary-text">${vuln.summary}</p>` : '<p class="no-summary">No summary available</p>'}
+                                                </div>
+                                            </div>
+                                            <div class="issue-details">
+                                                <div class="version-section">
+                                                    <div class="version-group">
+                                                        <h4>Affected Versions:</h4>
+                                                        <div class="version-tags">
+                                                            ${vuln.affected_versions.map(version => `<span class="version-tag">${version}</span>`).join('')}
+                                                        </div>
+                                                    </div>
+                                                    <div class="version-group">
+                                                        <h4>Fixed in Versions:</h4>
+                                                        <div class="version-tags">
+                                                            ${vuln.fixed_in.map(version => `<span class="version-tag fixed">${version}</span>`).join('')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                    }).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (analysisType === 'AI' && results.ai_analysis?.data?.findings) {
+                results.ai_analysis.data.findings.forEach(finding => {
+                    let severity = finding.severity.toLowerCase();
+                    if (severity === 'moderate') {
+                        severity = 'medium';
+                    }
+                    issuesHTML += `
+                        <div class="issue-card severity-${severity}">
+                            <div class="issue-header">
+                                <span class="severity-badge severity-${severity}">${severity.toUpperCase()}</span>
+                                <span class="issue-type">${finding.issue_type}</span>
+                            </div>
+                            <div class="issue-details">
+                                <p><strong>Category:</strong> ${finding.category}</p>
+                                <p><strong>Description:</strong> ${finding.description}</p>
+                                <p><strong>Impact:</strong> ${finding.impact}</p>
+                                <p><strong>Recommendation:</strong> ${finding.recommendation}</p>
+                                ${finding.line_numbers ? `<p><strong>Lines:</strong> ${finding.line_numbers.join(', ')}</p>` : ''}
+                                ${finding.references ? `
+                                    <div class="references">
+                                        <strong>References:</strong>
+                                        <ul>
+                                            ${finding.references.map(ref => `<li><a href="${ref}" target="_blank" rel="noopener noreferrer">${ref}</a></li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            issuesDiv.innerHTML = issuesHTML || '<div class="empty-state"><p>No issues found</p></div>';
+        }
+
+        // Function to show error message
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<p>${message}</p>`;
+            container.prepend(errorDiv);
+        }
+
+        // Theme toggle function
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        // Navigation function
+        function navigateBack(event) {
+            event.preventDefault();
+            window.location.href = '/';
+            return false;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check dark mode preference
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+
+            // Fetch and display data
+            const scanData = await fetchRecentScan();
+            if (scanData) {
+                updateAnalysisSummary(scanData);
+                updateIssuesContainer(scanData);
+            }
+        });
+    </script>
+</body>
+
+</html>

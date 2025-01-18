@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-analyzer
+  namespace: security-scanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-analyzer
+  template:
+    metadata:
+      labels:
+        app: ai-analyzer
+    spec:
+      containers:
+      - name: ai-analyzer
+        # Replace with your Docker Hub image
+        image: saaf20/ai-analyzer:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 5001
+        env:
+          - name: FLASK_ENV
+            value: "development"
+          - name: FLASK_APP
+            value: "server.py"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-analyzer-service
+  namespace: security-scanner
+spec:
+  selector:
+    app: ai-analyzer
+  ports:
+    - port: 5001
+      targetPort: 5001
+      protocol: TCP
+      name: http

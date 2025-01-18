@@ -1,0 +1,23 @@
+@startuml
+title "Security Scanner Microservices Architecture"
+
+actor "User" as U
+
+package "Kubernetes Cluster (Namespace: security-scanner)" {
+  node "Frontend (Flask + UI)" as FE
+  node "Static Analyzer" as SA
+  node "Dependency Analyzer" as DA
+  node "AI Analyzer" as AI
+  database "MongoDB" as DB
+}
+
+U -> FE : Submit Code via HTTP
+
+FE <--> SA : REST: /analyze (Static Check)
+FE <--> DA : REST: /analyze (Dependency Check)
+FE <--> AI : REST: /analyze (AI Check)
+FE --> DB : Store Scan Results
+
+DB --> FE : Retrieve Past Results
+
+@enduml
