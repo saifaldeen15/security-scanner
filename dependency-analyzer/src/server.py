@@ -1,4 +1,3 @@
-#dependency-analyzer/src/server.py
 from flask import Flask, request, jsonify
 from analyzer.dependency_analyzer import DependencyAnalyzer
 

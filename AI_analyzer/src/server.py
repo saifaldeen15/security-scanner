@@ -1,4 +1,3 @@
-# AI_analyzer/src/server.py
 from flask import Flask, request, jsonify
 from analyzer.AI_analyzer import AIAnalyzer
 from config import CONFIG

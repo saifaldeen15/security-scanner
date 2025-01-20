@@ -20,11 +20,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 5001
-        env:
-          - name: FLASK_ENV
-            value: "development"
-          - name: FLASK_APP
-            value: "server.py"
 ---
 apiVersion: v1
 kind: Service

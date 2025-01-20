@@ -21,7 +21,7 @@ spec:
         ports:
           - containerPort: 5000
         env:
-          - name: CODE_ANALYZER_URL
+          - name: STATIC_ANALYZER_URL
             value: "http://static-analyzer-service.security-scanner.svc.cluster.local:5003"
           - name: DEPENDENCY_SCANNER_URL
             value: "http://dependency-analyzer-service.security-scanner.svc.cluster.local:5004"
